@@ -5,11 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>KILAT BOOTH — Photobooth Digital</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@400;500;600;700&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Bungee&family=Space+Grotesk:wght@400;500;600;700&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg:#0b0b12;
-    --bg-2:#101019;
     --panel:#15151f;
     --panel-2:#1c1c2a;
     --pink:#ff2e92;
@@ -24,6 +23,7 @@
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
   body{
+    position:relative;
     background:
       radial-gradient(circle at 15% 0%, rgba(255,46,146,0.15), transparent 45%),
       radial-gradient(circle at 85% 10%, rgba(46,230,255,0.12), transparent 40%),
@@ -32,13 +32,22 @@
     font-family:'Space Grotesk', sans-serif;
     min-height:100vh;
     padding:32px 18px 60px;
+    overflow-x:hidden;
   }
   h1,h2{margin:0;}
   button{font-family:inherit; cursor:pointer;}
   input{font-family:inherit;}
 
+  /* ---------- Ambient background ---------- */
+  .ambient{position:fixed; inset:0; pointer-events:none; z-index:-1; overflow:hidden;}
+  .ambient span{position:absolute; opacity:.07; font-size:60px; animation:floatY 16s ease-in-out infinite;}
+  .ambient span:nth-child(1){top:8%; left:6%;}
+  .ambient span:nth-child(2){top:58%; left:88%; font-size:84px; animation-delay:3.5s;}
+  .ambient span:nth-child(3){top:82%; left:12%; animation-delay:7s;}
+  @keyframes floatY{0%,100%{transform:translateY(0) rotate(0deg);} 50%{transform:translateY(-26px) rotate(6deg);}}
+
   /* ---------- Header ---------- */
-  .brand{text-align:center; margin-bottom:36px;}
+  .brand{text-align:center; margin-bottom:14px;}
   .brand-mark{font-size:34px; filter:drop-shadow(0 0 10px var(--pink));}
   .brand h1{
     font-family:'Anton', sans-serif;
@@ -52,6 +61,16 @@
   }
   .brand h1 span{display:block; font-size:0.55em; letter-spacing:10px; color:var(--cyan); -webkit-text-fill-color:var(--cyan);}
   .tagline{color:var(--muted); font-size:14px; margin-top:8px;}
+
+  .hero-strip{display:flex; justify-content:center; gap:14px; margin:20px 0 34px;}
+  .hero-card{
+    width:54px; height:54px; border-radius:10px; background:var(--panel-2);
+    border:2px solid var(--line); display:flex; align-items:center; justify-content:center;
+    font-size:22px; box-shadow:0 10px 22px -10px rgba(0,0,0,.6);
+  }
+  .hero-card.c1{transform:rotate(-9deg);}
+  .hero-card.c2{transform:rotate(4deg); margin-top:-8px;}
+  .hero-card.c3{transform:rotate(9deg);}
 
   /* ---------- Layout ---------- */
   .layout{
@@ -68,13 +87,30 @@
 
   /* ---------- Cabinet (camera machine) ---------- */
   .cabinet{
+    position:relative;
     background:linear-gradient(180deg,var(--panel-2),var(--panel));
     border-radius:26px;
     padding:18px;
     border:1px solid var(--line);
     box-shadow:0 0 0 1px rgba(255,255,255,0.02), 0 30px 60px -20px rgba(0,0,0,0.6), 0 0 40px -10px rgba(255,46,146,0.25);
-    position:relative;
   }
+  .cabinet::before, .cabinet::after{
+    content:''; position:absolute; top:18px; bottom:18px; width:4px; border-radius:4px;
+    background:linear-gradient(180deg,var(--pink),var(--purple),var(--cyan));
+    box-shadow:0 0 12px rgba(255,46,146,.5);
+  }
+  .cabinet::before{left:6px;}
+  .cabinet::after{right:6px;}
+
+  .badge-open{
+    position:absolute; top:14px; left:14px; z-index:5;
+    background:linear-gradient(90deg,var(--pink),var(--purple)); color:#fff;
+    font-family:'Bungee', cursive; font-size:9px; letter-spacing:1.2px;
+    padding:7px 11px; border-radius:20px; box-shadow:0 0 14px rgba(255,46,146,.6);
+    animation:blinkBadge 2.4s ease-in-out infinite;
+  }
+  @keyframes blinkBadge{0%,100%{opacity:1;} 50%{opacity:.5;}}
+
   .cabinet-top{display:flex; gap:8px; justify-content:center; padding:4px 0 14px;}
   .cabinet-light{width:10px; height:10px; border-radius:50%; opacity:.85; animation:pulse 2.4s ease-in-out infinite;}
   .l1{background:var(--pink); box-shadow:0 0 10px var(--pink);}
@@ -91,21 +127,30 @@
     border:2px solid var(--line);
     box-shadow:inset 0 0 40px rgba(0,0,0,0.6);
   }
+  .screen::after{
+    content:''; position:absolute; inset:0; pointer-events:none; mix-blend-mode:overlay; z-index:4;
+    background:repeating-linear-gradient(to bottom, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 1px, transparent 2px, transparent 4px);
+  }
   .screen video{
     width:100%; height:100%; object-fit:cover; display:block;
     transition:filter .25s ease;
   }
   .screen video.mirrored{transform:scaleX(-1);}
+  #faceCanvas{
+    position:absolute; inset:0; width:100%; height:100%;
+    pointer-events:none; z-index:1;
+  }
+  #faceCanvas.mirrored{transform:scaleX(-1);}
   .cam-placeholder{
-    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center; z-index:2;
     text-align:center; padding:30px; color:var(--muted); font-size:14px; line-height:1.6;
   }
   .screen-overlay{
     position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
-    gap:6px; pointer-events:none; text-shadow:0 2px 14px rgba(0,0,0,.7);
+    gap:6px; pointer-events:none; text-shadow:0 2px 14px rgba(0,0,0,.7); z-index:3;
   }
   .overlay-msg{
-    font-weight:700; font-size:clamp(16px,3.5vw,22px); margin:0;
+    font-weight:700; font-size:clamp(15px,3.4vw,21px); margin:0;
     background:rgba(11,11,18,0.55); padding:8px 18px; border-radius:30px;
     opacity:0; transition:opacity .2s ease;
   }
@@ -117,12 +162,12 @@
   }
   .overlay-count.show{opacity:1; transform:scale(1);}
   .flash{
-    position:absolute; inset:0; background:var(--flash); opacity:0; pointer-events:none;
+    position:absolute; inset:0; background:var(--flash); opacity:0; pointer-events:none; z-index:5;
     transition:opacity .08s ease-out;
   }
   .flash.on{opacity:.95; transition:opacity 0s;}
   .shot-dots{
-    position:absolute; bottom:10px; left:0; right:0; display:flex; justify-content:center; gap:8px;
+    position:absolute; bottom:10px; left:0; right:0; display:flex; justify-content:center; gap:8px; z-index:3;
   }
   .shot-dots span{
     width:9px; height:9px; border-radius:50%; background:rgba(255,255,255,0.25); border:1px solid rgba(255,255,255,0.4);
@@ -130,19 +175,28 @@
   }
   .shot-dots span.filled{background:var(--pink); box-shadow:0 0 8px var(--pink); border-color:var(--pink);}
 
+  .thumb-rail{
+    display:flex; gap:8px; overflow-x:auto; padding:12px 4px 2px; min-height:54px;
+  }
+  .thumb-rail img{
+    width:54px; height:54px; object-fit:cover; border-radius:8px; border:2px solid var(--line);
+    flex:0 0 auto; opacity:0; animation:thumbIn .3s ease forwards;
+  }
+  @keyframes thumbIn{from{opacity:0; transform:scale(.8);} to{opacity:1; transform:scale(1);}}
+
   .cabinet-controls{
-    display:flex; align-items:center; justify-content:center; gap:18px; padding:18px 4px 6px;
+    display:flex; align-items:center; justify-content:center; gap:16px; padding:10px 4px 6px; flex-wrap:wrap;
   }
   .icon-btn{
-    width:46px; height:46px; border-radius:50%; border:1px solid var(--line);
-    background:var(--panel-2); color:var(--text); font-size:18px;
+    width:44px; height:44px; border-radius:50%; border:1px solid var(--line);
+    background:var(--panel-2); color:var(--text); font-size:17px;
     display:flex; align-items:center; justify-content:center;
     transition:border-color .2s, transform .2s;
   }
   .icon-btn:hover{border-color:var(--cyan); transform:translateY(-1px);}
   .icon-btn:disabled{opacity:.4; cursor:not-allowed; transform:none;}
   .shutter{
-    min-width:200px; padding:18px 22px; border-radius:40px; border:none;
+    min-width:190px; padding:17px 22px; border-radius:40px; border:none;
     font-weight:700; font-size:15px; letter-spacing:1px;
     background:linear-gradient(90deg,var(--pink),var(--purple));
     color:#fff;
@@ -163,6 +217,7 @@
   .panel.locked{opacity:.5; pointer-events:none;}
   .field{margin-bottom:18px;}
   .field label{display:block; font-size:12px; text-transform:uppercase; letter-spacing:1.2px; color:var(--muted); margin-bottom:8px;}
+  .field .hint{display:block; font-size:11px; text-transform:none; letter-spacing:0; color:var(--muted); margin-top:6px;}
   .chip-row{display:flex; gap:8px; flex-wrap:wrap;}
   .chip-row button{
     padding:8px 14px; border-radius:20px; border:1px solid var(--line);
@@ -193,12 +248,22 @@
   .result h2{font-family:'Anton',sans-serif; font-size:26px; letter-spacing:1px; margin-bottom:18px;}
   .result-wrap{
     background:radial-gradient(circle at 50% 0%, rgba(46,230,255,0.08), transparent 60%);
-    padding:20px; border-radius:20px; display:inline-block;
+    padding:20px; border-radius:20px; display:inline-block; max-width:100%;
   }
   #finalCanvas{
     max-width:100%; height:auto; border-radius:10px;
     box-shadow:0 30px 60px -20px rgba(0,0,0,0.7);
   }
+  .retake-hint{color:var(--muted); font-size:13px; margin:22px 0 10px;}
+  .retake-rail{display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-bottom:10px;}
+  .retake-item{position:relative; width:72px; height:72px; border-radius:10px; overflow:hidden; border:2px solid var(--line);}
+  .retake-item img{width:100%; height:100%; object-fit:cover; display:block;}
+  .retake-mini{
+    position:absolute; bottom:3px; right:3px; width:24px; height:24px; border-radius:50%;
+    border:none; background:rgba(11,11,18,.8); color:#fff; font-size:12px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .retake-mini:hover{background:var(--pink);}
   .result-actions{display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin-top:22px;}
   .btn{
     padding:12px 22px; border-radius:30px; border:1px solid var(--line);
@@ -211,23 +276,39 @@
 
   footer{text-align:center; color:var(--muted); font-size:12px; margin-top:50px;}
 
+  /* ---------- Confetti ---------- */
+  .confetti-layer{position:fixed; inset:0; pointer-events:none; overflow:hidden; z-index:50;}
+  .confetti-piece{position:absolute; top:-30px; animation:confettiFall 2.2s ease-in forwards;}
+  @keyframes confettiFall{
+    0%{transform:translateY(0) rotate(0deg); opacity:1;}
+    100%{transform:translateY(100vh) rotate(360deg); opacity:0;}
+  }
+
   @media (prefers-reduced-motion: reduce){
-    .cabinet-light{animation:none;}
+    .cabinet-light, .badge-open, .ambient span, .confetti-piece{animation:none !important;}
     *{transition-duration:.01ms !important;}
   }
 </style>
 </head>
 <body>
 
+<div class="ambient" aria-hidden="true"><span>⚡</span><span>✨</span><span>⚡</span></div>
+
 <header class="brand">
   <div class="brand-mark">⚡</div>
   <h1>KILAT<span>BOOTH</span></h1>
   <p class="tagline">Photobooth digital — atur gaya, pencet mulai, hasil instan jadi strip foto.</p>
+  <div class="hero-strip" aria-hidden="true">
+    <div class="hero-card c1">📸</div>
+    <div class="hero-card c2">✨</div>
+    <div class="hero-card c3">🎬</div>
+  </div>
 </header>
 
 <main class="layout">
 
   <section class="cabinet" aria-label="Kamera photobooth">
+    <span class="badge-open">OPEN 24 JAM</span>
     <div class="cabinet-top">
       <span class="cabinet-light l1"></span><span class="cabinet-light l2"></span><span class="cabinet-light l3"></span>
     </div>
@@ -235,6 +316,7 @@
     <div class="screen" id="screen">
       <p class="cam-placeholder" id="camPlaceholder">Tekan "Mulai Sesi" untuk mengaktifkan kamera.<br>Izinkan akses kamera saat diminta ya.</p>
       <video id="video" autoplay playsinline muted class="mirrored"></video>
+      <canvas id="faceCanvas" class="mirrored"></canvas>
       <div class="screen-overlay" id="overlay">
         <p class="overlay-msg" id="overlayMsg"></p>
         <p class="overlay-count" id="overlayCount"></p>
@@ -243,10 +325,13 @@
       <div class="shot-dots" id="shotDots"></div>
     </div>
 
+    <div class="thumb-rail" id="thumbRail" aria-label="Pratinjau foto yang sudah diambil"></div>
+
     <div class="cabinet-controls">
       <button class="icon-btn" id="switchCam" title="Ganti kamera" aria-label="Ganti kamera depan/belakang">⟳</button>
       <button class="shutter" id="startBtn">MULAI SESI</button>
       <button class="icon-btn" id="mirrorToggle" title="Mirror preview" aria-label="Aktif/nonaktifkan mirror">⇋</button>
+      <button class="icon-btn" id="soundToggle" title="Suara jepretan" aria-label="Aktif/nonaktifkan suara">🔊</button>
     </div>
   </section>
 
@@ -273,7 +358,7 @@
     </div>
 
     <div class="field">
-      <label>Filter</label>
+      <label>Filter Warna</label>
       <div class="chip-row" id="filterRow">
         <button data-val="normal" class="active">Normal</button>
         <button data-val="bw">B &amp; W</button>
@@ -285,10 +370,24 @@
     </div>
 
     <div class="field">
-      <label>Layout Strip</label>
+      <label>Filter Wajah (AR)</label>
+      <div class="chip-row" id="faceFilterRow">
+        <button data-val="none" class="active">Tanpa</button>
+        <button data-val="glasses">🕶 Kacamata</button>
+        <button data-val="bunny">🐰 Telinga Kelinci</button>
+        <button data-val="mustache">👨 Kumis</button>
+        <button data-val="flower">🌸 Mahkota Bunga</button>
+        <button data-val="dog">🐶 Anjing Lucu</button>
+      </div>
+      <span class="hint">Mengikuti wajahmu secara live. Model AI dimuat sekali dari internet saat pertama dipilih.</span>
+    </div>
+
+    <div class="field">
+      <label>Orientasi Strip</label>
       <div class="chip-row" id="layoutRow">
-        <button data-val="strip" class="active">Strip Vertikal</button>
-        <button data-val="grid">Grid</button>
+        <button data-val="vertical" class="active">↕ Vertikal</button>
+        <button data-val="horizontal">↔ Horizontal</button>
+        <button data-val="grid">▦ Grid 2×2</button>
       </div>
     </div>
 
@@ -300,6 +399,17 @@
         <button data-val="pink" style="background:#ff2e92"></button>
         <button data-val="cyan" style="background:#2ee6ff"></button>
         <button data-val="sunset" style="background:linear-gradient(135deg,#ff9966,#ff2e92)"></button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Stiker Sudut</label>
+      <div class="chip-row" id="stickerRow">
+        <button data-val="none" class="active">Tanpa</button>
+        <button data-val="sparkle">✨ Sparkle</button>
+        <button data-val="cute">🎀 Cute</button>
+        <button data-val="cool">😎 Cool</button>
+        <button data-val="love">❤️ Love</button>
       </div>
     </div>
 
@@ -316,15 +426,17 @@
   <div class="result-wrap">
     <canvas id="finalCanvas"></canvas>
   </div>
+  <p class="retake-hint">Kurang puas sama satu pose? Klik ↺ di fotonya buat ambil ulang.</p>
+  <div class="retake-rail" id="retakeRail"></div>
   <div class="result-actions">
     <button class="btn primary" id="downloadBtn">⬇ Unduh PNG</button>
     <button class="btn" id="shareBtn" hidden>↗ Bagikan</button>
-    <button class="btn ghost" id="retakeBtn">↺ Ambil Ulang</button>
+    <button class="btn ghost" id="retakeAllBtn">↺ Ambil Ulang Semua</button>
   </div>
 </section>
 
 <footer>
-  <p>Dibuat dengan ⚡ — semua foto diproses langsung di browser kamu, tidak diunggah ke server mana pun.</p>
+  <p>Dibuat dengan ⚡ — foto diproses langsung di browser kamu. Filter wajah memuat model AI dari CDN publik saat pertama dipakai (butuh internet), tapi tidak mengunggah wajahmu ke mana pun.</p>
 </footer>
 
 <script>
@@ -333,35 +445,43 @@
 
   // ---------- Elements ----------
   const video = document.getElementById('video');
+  const faceCanvas = document.getElementById('faceCanvas');
+  const faceCtx = faceCanvas.getContext('2d');
   const camPlaceholder = document.getElementById('camPlaceholder');
-  const overlay = document.getElementById('overlay');
   const overlayMsg = document.getElementById('overlayMsg');
   const overlayCount = document.getElementById('overlayCount');
   const flashEl = document.getElementById('flash');
   const shotDotsEl = document.getElementById('shotDots');
+  const thumbRailEl = document.getElementById('thumbRail');
   const startBtn = document.getElementById('startBtn');
   const switchCamBtn = document.getElementById('switchCam');
   const mirrorToggleBtn = document.getElementById('mirrorToggle');
+  const soundToggleBtn = document.getElementById('soundToggle');
   const panel = document.getElementById('panel');
   const captionInput = document.getElementById('captionInput');
   const resultSection = document.getElementById('result');
   const finalCanvas = document.getElementById('finalCanvas');
+  const retakeRailEl = document.getElementById('retakeRail');
   const downloadBtn = document.getElementById('downloadBtn');
   const shareBtn = document.getElementById('shareBtn');
-  const retakeBtn = document.getElementById('retakeBtn');
+  const retakeAllBtn = document.getElementById('retakeAllBtn');
 
   // ---------- State ----------
   let stream = null;
   let currentFacing = 'user';
   let isMirrored = true;
   let isRunning = false;
+  let soundOn = true;
+  let audioCtx = null;
   let photosCanvases = [];
 
   let shotsCount = 5;
   let countdownSeconds = 3;
   let currentFilter = 'normal';
-  let layoutMode = 'strip';
+  let layoutMode = 'vertical';
   let frameTheme = 'classic';
+  let stickerTheme = 'none';
+  let faceFilterTheme = 'none';
 
   const FILTERS = {
     normal: 'none',
@@ -378,6 +498,13 @@
     pink:    {bg:'#ff2e92', text:'#1a0a12', accent:'#0b0b12', sub:'#5c1430'},
     cyan:    {bg:'#2ee6ff', text:'#06222a', accent:'#0b0b12', sub:'#0f4a55'},
     sunset:  {bg:'gradient', text:'#26100a', accent:'#ffffff', sub:'#5a2412'}
+  };
+
+  const STICKERS = {
+    sparkle: ['✨','✨'],
+    cute: ['🎀','💗'],
+    cool: ['😎','🤙'],
+    love: ['❤️','💌']
   };
 
   const POSES = ['Senyum lebar! 😄','Gaya bebas! ✌️','Pose imut~ 🥰','Wajah kocak! 😝','Tatapan kece 😎','Bonus pose! 🎉'];
@@ -403,29 +530,345 @@
     const row = document.getElementById(id);
     row.querySelectorAll('button').forEach(btn => {
       btn.addEventListener('click', () => {
-        row.querySelectorAll('button').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        const val = parseNum ? parseInt(btn.dataset.val, 10) : btn.dataset.val;
-        onChange(val);
+        onChange(parseNum ? parseInt(btn.dataset.val, 10) : btn.dataset.val, btn, row);
       });
     });
   }
+  function activateChip(row, btn){
+    row.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
 
-  setupChipRow('shotsRow', v => { shotsCount = v; renderShotDots(); }, true);
-  setupChipRow('countdownRow', v => { countdownSeconds = v; }, true);
-  setupChipRow('filterRow', v => {
-    currentFilter = v;
-    video.style.filter = FILTERS[v];
-  });
-  setupChipRow('layoutRow', v => { layoutMode = v; });
-  setupChipRow('frameRow', v => { frameTheme = v; });
+  setupChipRow('shotsRow', (v,btn,row) => { shotsCount = v; renderShotDots(); activateChip(row,btn); }, true);
+  setupChipRow('countdownRow', (v,btn,row) => { countdownSeconds = v; activateChip(row,btn); }, true);
+  setupChipRow('filterRow', (v,btn,row) => { currentFilter = v; video.style.filter = FILTERS[v]; activateChip(row,btn); });
+  setupChipRow('layoutRow', (v,btn,row) => { layoutMode = v; activateChip(row,btn); });
+  setupChipRow('frameRow', (v,btn,row) => { frameTheme = v; activateChip(row,btn); });
+  setupChipRow('stickerRow', (v,btn,row) => { stickerTheme = v; activateChip(row,btn); });
 
   mirrorToggleBtn.addEventListener('click', () => {
     isMirrored = !isMirrored;
     video.classList.toggle('mirrored', isMirrored);
+    faceCanvas.classList.toggle('mirrored', isMirrored);
   });
 
-  // ---------- Camera ----------
+  soundToggleBtn.addEventListener('click', () => {
+    soundOn = !soundOn;
+    soundToggleBtn.textContent = soundOn ? '🔊' : '🔇';
+  });
+
+  function playShutter(){
+    if(!soundOn) return;
+    try{
+      if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'square';
+      o.frequency.value = 1200;
+      g.gain.setValueAtTime(0.18, audioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start();
+      o.stop(audioCtx.currentTime + 0.09);
+    }catch(e){ /* ignore audio errors */ }
+  }
+
+  // ================= FACE FILTER (AR) =================
+  let faceApiLoaded = false;
+  let modelsLoaded = false;
+  let modelsLoading = false;
+  let faceDetectTimer = null;
+  let lastLandmarks = null;
+
+  function loadScriptOnce(src){
+    return new Promise((resolve, reject) => {
+      const existing = document.querySelector(`script[data-src="${src}"]`);
+      if(existing){ existing.addEventListener('load', resolve); existing.addEventListener('error', reject); if(window.faceapi) resolve(); return; }
+      const s = document.createElement('script');
+      s.src = src;
+      s.dataset.src = src;
+      s.onload = resolve;
+      s.onerror = reject;
+      document.head.appendChild(s);
+    });
+  }
+
+  async function ensureFaceApi(){
+    if(modelsLoaded) return true;
+    if(modelsLoading){
+      while(modelsLoading) await wait(150);
+      return modelsLoaded;
+    }
+    modelsLoading = true;
+    overlayMsg.textContent = 'Memuat filter wajah...';
+    overlayMsg.classList.add('show');
+    try{
+      if(!faceApiLoaded){
+        await loadScriptOnce('https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/dist/face-api.min.js');
+        faceApiLoaded = true;
+      }
+      const MODEL_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights';
+      await Promise.all([
+        window.faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+        window.faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODEL_URL)
+      ]);
+      modelsLoaded = true;
+      return true;
+    }catch(e){
+      alert('Gagal memuat filter wajah. Pastikan koneksi internet aktif, lalu coba pilih filter lagi.');
+      return false;
+    }finally{
+      modelsLoading = false;
+      overlayMsg.classList.remove('show');
+    }
+  }
+
+  setupChipRow('faceFilterRow', async (v, btn, row) => {
+    if(v === 'none'){
+      faceFilterTheme = 'none';
+      activateChip(row, btn);
+      stopFaceDetection();
+      clearFaceCanvas();
+      return;
+    }
+    const ok = await ensureFaceApi();
+    if(!ok) return;
+    faceFilterTheme = v;
+    activateChip(row, btn);
+    if(stream && video.videoWidth) startFaceDetection();
+  });
+
+  function sizeFaceCanvas(){
+    if(!video.videoWidth) return;
+    faceCanvas.width = video.videoWidth;
+    faceCanvas.height = video.videoHeight;
+  }
+
+  function clearFaceCanvas(){
+    faceCtx.clearRect(0, 0, faceCanvas.width, faceCanvas.height);
+  }
+
+  function startFaceDetection(){
+    stopFaceDetection();
+    faceDetectTimer = setInterval(async () => {
+      if(!modelsLoaded || faceFilterTheme === 'none' || !video.videoWidth) return;
+      try{
+        const res = await window.faceapi
+          .detectSingleFace(video, new window.faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 }))
+          .withFaceLandmarks(true);
+        lastLandmarks = res ? res.landmarks.positions : null;
+      }catch(e){
+        lastLandmarks = null;
+      }
+      clearFaceCanvas();
+      if(lastLandmarks && faceFilterTheme !== 'none'){
+        drawFaceFilterOverlay(faceCtx, lastLandmarks, faceFilterTheme);
+      }
+    }, 150);
+  }
+
+  function stopFaceDetection(){
+    if(faceDetectTimer){ clearInterval(faceDetectTimer); faceDetectTimer = null; }
+    lastLandmarks = null;
+  }
+
+  // ---- geometry helpers ----
+  function avgPoint(pts){ let x=0,y=0; pts.forEach(p=>{x+=p.x;y+=p.y;}); return {x:x/pts.length, y:y/pts.length}; }
+  function distPt(a,b){ return Math.hypot(b.x-a.x, b.y-a.y); }
+  function anglePt(a,b){ return Math.atan2(b.y-a.y, b.x-a.x); }
+  function midPt(a,b){ return {x:(a.x+b.x)/2, y:(a.y+b.y)/2}; }
+  function roundRectPathCentered(ctx,cx,cy,w,h,r){
+    const x=cx-w/2, y=cy-h/2;
+    ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r);
+    ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r);
+    ctx.arcTo(x,y,x+w,y,r);
+    ctx.closePath();
+  }
+
+  function drawGlasses(ctx, lm){
+    const eyeL = avgPoint(lm.slice(36,42));
+    const eyeR = avgPoint(lm.slice(42,48));
+    const center = midPt(eyeL, eyeR);
+    const eyeDist = distPt(eyeL, eyeR);
+    const angle = anglePt(eyeL, eyeR);
+    const lensW = eyeDist*0.62, lensH = eyeDist*0.5, gap = eyeDist*0.22;
+    ctx.save();
+    ctx.translate(center.x, center.y);
+    ctx.rotate(angle);
+    ctx.lineWidth = Math.max(2, eyeDist*0.045);
+    ctx.strokeStyle = '#0b0b12';
+    ctx.fillStyle = 'rgba(11,11,18,0.8)';
+    [-1,1].forEach(side=>{
+      const cx = side*(gap/2 + lensW/2);
+      roundRectPathCentered(ctx, cx, 0, lensW, lensH, lensH*0.35);
+      ctx.fill(); ctx.stroke();
+    });
+    ctx.beginPath();
+    ctx.moveTo(-gap/2, 0);
+    ctx.lineTo(gap/2, 0);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(-(gap/2+lensW), 0);
+    ctx.lineTo(-(gap/2+lensW+lensW*0.5), -lensH*0.1);
+    ctx.moveTo((gap/2+lensW), 0);
+    ctx.lineTo((gap/2+lensW+lensW*0.5), -lensH*0.1);
+    ctx.stroke();
+    ctx.strokeStyle = '#2ee6ff';
+    ctx.lineWidth = Math.max(1, eyeDist*0.02);
+    [-1,1].forEach(side=>{
+      const cx = side*(gap/2 + lensW/2);
+      ctx.beginPath();
+      ctx.ellipse(cx - side*lensW*0.15, -lensH*0.15, lensW*0.12, lensH*0.1, 0, 0, Math.PI*2);
+      ctx.stroke();
+    });
+    ctx.restore();
+  }
+
+  function drawBunnyEars(ctx, lm){
+    const browMid = midPt(lm[19], lm[24]);
+    const chin = lm[8];
+    const faceH = distPt(chin, browMid);
+    const eyeL = avgPoint(lm.slice(36,42)), eyeR = avgPoint(lm.slice(42,48));
+    const angle = anglePt(eyeL, eyeR);
+    const earH = faceH*0.95, earW = faceH*0.30;
+    ctx.save();
+    ctx.translate(browMid.x, browMid.y - faceH*0.05);
+    ctx.rotate(angle);
+    [-1,1].forEach(side=>{
+      ctx.save();
+      ctx.translate(side*faceH*0.22, 0);
+      ctx.rotate(side*0.28);
+      ctx.fillStyle = '#fdfcf7';
+      ctx.beginPath();
+      ctx.ellipse(0, -earH*0.5, earW*0.5, earH*0.5, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(0,0,0,0.15)'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = '#ff9dc4';
+      ctx.beginPath();
+      ctx.ellipse(0, -earH*0.5, earW*0.28, earH*0.32, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+    });
+    ctx.restore();
+  }
+
+  function drawMustache(ctx, lm){
+    const noseBottom = lm[33];
+    const lipTop = lm[51];
+    const center = midPt(noseBottom, lipTop);
+    const mouthL = lm[48], mouthR = lm[54];
+    const mouthW = distPt(mouthL, mouthR);
+    const angle = anglePt(mouthL, mouthR);
+    const w = mouthW*1.35, h = mouthW*0.42;
+    ctx.save();
+    ctx.translate(center.x, center.y);
+    ctx.rotate(angle);
+    ctx.fillStyle = '#1a1410';
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.bezierCurveTo(w*0.12, -h*0.5, w*0.28, h*0.15, w*0.52, -h*0.05);
+    ctx.bezierCurveTo(w*0.42, h*0.35, w*0.22, h*0.42, 0, h*0.12);
+    ctx.bezierCurveTo(-w*0.22, h*0.42, -w*0.42, h*0.35, -w*0.52, -h*0.05);
+    ctx.bezierCurveTo(-w*0.28, h*0.15, -w*0.12, -h*0.5, 0, 0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawFlower(ctx,x,y,r,color){
+    ctx.save();
+    ctx.translate(x,y);
+    for(let k=0;k<5;k++){
+      ctx.save();
+      ctx.rotate((Math.PI*2/5)*k);
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.ellipse(0,-r*0.7,r*0.55,r*0.75,0,0,Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+    }
+    ctx.fillStyle = '#fff685';
+    ctx.beginPath();
+    ctx.arc(0,0,r*0.4,0,Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawFlowerCrown(ctx, lm){
+    const browIdx = [17,19,21,22,24,26];
+    const browMid = midPt(lm[19], lm[24]);
+    const chin = lm[8];
+    const faceH = distPt(chin, browMid);
+    const eyeL = avgPoint(lm.slice(36,42)), eyeR = avgPoint(lm.slice(42,48));
+    const angle = anglePt(eyeL, eyeR);
+    const colors = ['#ff2e92','#fff685','#2ee6ff','#ff9dc4','#c9a6ff','#ff2e92'];
+    browIdx.forEach((idx,i)=>{
+      const p = lm[idx];
+      const liftX = p.x + (-Math.sin(angle))*faceH*0.20;
+      const liftY = p.y - Math.cos(angle)*faceH*0.20;
+      drawFlower(ctx, liftX, liftY, faceH*0.085, colors[i % colors.length]);
+    });
+  }
+
+  function drawDogFilter(ctx, lm){
+    const noseBottom = lm[33];
+    const eyeL = avgPoint(lm.slice(36,42)), eyeR = avgPoint(lm.slice(42,48));
+    const angle = anglePt(eyeL, eyeR);
+    const faceW = distPt(lm[0], lm[16]);
+    const browMid = midPt(lm[19], lm[24]);
+    const chin = lm[8];
+    const faceH = distPt(chin, browMid);
+
+    ctx.save();
+    ctx.translate(noseBottom.x, noseBottom.y);
+    ctx.rotate(angle);
+    ctx.fillStyle = '#2b1a12';
+    ctx.beginPath();
+    ctx.ellipse(0,0, faceW*0.08, faceW*0.058, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.beginPath();
+    ctx.ellipse(-faceW*0.02,-faceW*0.016, faceW*0.018, faceW*0.012, 0,0,Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+
+    ctx.save();
+    ctx.translate(browMid.x, browMid.y - faceH*0.05);
+    ctx.rotate(angle);
+    const earH = faceH*0.75, earW = faceH*0.34;
+    [-1,1].forEach(side=>{
+      ctx.save();
+      ctx.translate(side*faceW*0.48, -faceH*0.05);
+      ctx.rotate(side*0.15);
+      ctx.fillStyle = '#8a5a34';
+      ctx.beginPath();
+      ctx.moveTo(0,0);
+      ctx.bezierCurveTo(side*earW*0.7, earH*0.25, side*earW*0.55, earH*0.9, side*earW*0.05, earH);
+      ctx.bezierCurveTo(side*-earW*0.15, earH*0.7, side*-earW*0.1, earH*0.2, 0,0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    });
+    ctx.restore();
+  }
+
+  const FACE_FILTER_DRAWERS = {
+    glasses: drawGlasses,
+    bunny: drawBunnyEars,
+    mustache: drawMustache,
+    flower: drawFlowerCrown,
+    dog: drawDogFilter
+  };
+
+  function drawFaceFilterOverlay(ctx, landmarks, theme){
+    const fn = FACE_FILTER_DRAWERS[theme];
+    if(fn) fn(ctx, landmarks);
+  }
+
+  // ================= CAMERA =================
   async function ensureCamera(facing){
     if(stream){
       stream.getTracks().forEach(t => t.stop());
@@ -435,6 +878,12 @@
     stream = await navigator.mediaDevices.getUserMedia(constraints);
     video.srcObject = stream;
     camPlaceholder.hidden = true;
+    await new Promise(resolve => {
+      if(video.readyState >= 1) return resolve();
+      video.onloadedmetadata = () => resolve();
+    });
+    sizeFaceCanvas();
+    if(faceFilterTheme !== 'none' && modelsLoaded) startFaceDetection();
     return stream;
   }
 
@@ -445,6 +894,7 @@
       currentFacing = currentFacing === 'user' ? 'environment' : 'user';
       isMirrored = currentFacing === 'user';
       video.classList.toggle('mirrored', isMirrored);
+      faceCanvas.classList.toggle('mirrored', isMirrored);
       await ensureCamera(currentFacing);
     }catch(e){
       alert('Tidak bisa mengganti kamera di perangkat ini.');
@@ -453,6 +903,42 @@
       switchCamBtn.disabled = false;
     }
   });
+
+  // ---------- Thumbnails ----------
+  function thumbDataURL(cv, size){
+    size = size || 120;
+    const t = document.createElement('canvas');
+    t.width = size;
+    t.height = Math.round(size * cv.height / cv.width);
+    t.getContext('2d').drawImage(cv, 0, 0, t.width, t.height);
+    return t.toDataURL('image/jpeg', 0.85);
+  }
+
+  function addLiveThumb(i, cv){
+    const img = document.createElement('img');
+    img.src = thumbDataURL(cv);
+    img.alt = 'Foto ' + (i + 1);
+    thumbRailEl.appendChild(img);
+  }
+
+  function buildRetakeRail(){
+    retakeRailEl.innerHTML = '';
+    photosCanvases.forEach((cv, i) => {
+      const item = document.createElement('div');
+      item.className = 'retake-item';
+      const img = document.createElement('img');
+      img.src = thumbDataURL(cv, 140);
+      img.alt = 'Foto ' + (i + 1);
+      const btn = document.createElement('button');
+      btn.className = 'retake-mini';
+      btn.textContent = '↺';
+      btn.setAttribute('aria-label', 'Ambil ulang foto ' + (i + 1));
+      btn.addEventListener('click', () => retakeSingle(i, img));
+      item.appendChild(img);
+      item.appendChild(btn);
+      retakeRailEl.appendChild(item);
+    });
+  }
 
   // ---------- Session flow ----------
   startBtn.addEventListener('click', startSession);
@@ -464,6 +950,7 @@
     switchCamBtn.disabled = true;
     panel.classList.add('locked');
     resultSection.hidden = true;
+    thumbRailEl.innerHTML = '';
 
     try{
       await ensureCamera(currentFacing);
@@ -480,7 +967,9 @@
     for(let i=0; i<shotsCount; i++){
       await posePhase(i);
       await countdownPhase();
-      await captureShot();
+      const cv = await captureFrame();
+      photosCanvases.push(cv);
+      addLiveThumb(i, cv);
       fillDot(i);
       await wait(700);
     }
@@ -510,7 +999,6 @@
     for(let c = countdownSeconds; c >= 1; c--){
       overlayCount.textContent = c;
       overlayCount.classList.remove('show');
-      // force reflow so the pop animation restarts each tick
       void overlayCount.offsetWidth;
       overlayCount.classList.add('show');
       await wait(1000);
@@ -518,8 +1006,9 @@
     overlayCount.classList.remove('show');
   }
 
-  async function captureShot(){
+  async function captureFrame(){
     flashEl.classList.add('on');
+    playShutter();
 
     const vw = video.videoWidth || 640;
     const vh = video.videoHeight || 480;
@@ -533,10 +1022,15 @@
       ctx.scale(-1, 1);
     }
     ctx.drawImage(video, 0, 0, vw, vh);
-    photosCanvases.push(cv);
+
+    if(faceFilterTheme !== 'none' && lastLandmarks){
+      ctx.filter = 'none';
+      drawFaceFilterOverlay(ctx, lastLandmarks, faceFilterTheme);
+    }
 
     await wait(90);
     flashEl.classList.remove('on');
+    return cv;
   }
 
   async function finishSession(){
@@ -547,14 +1041,64 @@
     panel.classList.remove('locked');
 
     await composeFinalStrip();
+    buildRetakeRail();
     resultSection.hidden = false;
     resultSection.scrollIntoView({ behavior:'smooth', block:'start' });
+    spawnConfetti();
   }
 
-  retakeBtn.addEventListener('click', () => {
+  retakeAllBtn.addEventListener('click', () => {
     resultSection.hidden = true;
     document.querySelector('.cabinet').scrollIntoView({ behavior:'smooth', block:'start' });
   });
+
+  async function retakeSingle(i, imgEl){
+    if(isRunning) return;
+    isRunning = true;
+    startBtn.disabled = true;
+    switchCamBtn.disabled = true;
+    panel.classList.add('locked');
+
+    document.querySelector('.cabinet').scrollIntoView({ behavior:'smooth', block:'start' });
+    await wait(450);
+
+    overlayMsg.textContent = `Ambil ulang foto ${i+1}!`;
+    overlayMsg.classList.add('show');
+    await wait(700);
+    overlayMsg.classList.remove('show');
+
+    await countdownPhase();
+    const cv = await captureFrame();
+    photosCanvases[i] = cv;
+    if(imgEl) imgEl.src = thumbDataURL(cv, 140);
+
+    isRunning = false;
+    startBtn.disabled = false;
+    switchCamBtn.disabled = false;
+    panel.classList.remove('locked');
+
+    await composeFinalStrip();
+    resultSection.scrollIntoView({ behavior:'smooth', block:'start' });
+  }
+
+  // ---------- Confetti ----------
+  function spawnConfetti(){
+    if(window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const layer = document.createElement('div');
+    layer.className = 'confetti-layer';
+    document.body.appendChild(layer);
+    const emojis = ['✨','🎉','💖','⚡','🌟'];
+    for(let i=0;i<26;i++){
+      const s = document.createElement('span');
+      s.className = 'confetti-piece';
+      s.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+      s.style.left = (Math.random()*100) + 'vw';
+      s.style.animationDelay = (Math.random()*0.6) + 's';
+      s.style.fontSize = (14 + Math.random()*14) + 'px';
+      layer.appendChild(s);
+    }
+    setTimeout(() => layer.remove(), 2600);
+  }
 
   // ---------- Compose final strip ----------
   function drawBolt(ctx, x, y, size, color){
@@ -584,13 +1128,34 @@
     ctx.closePath();
   }
 
-  function drawHoles(ctx, totalW, totalH, color){
-    const r = 4.5, marginX = 16, gap = 26;
+  function drawHoles(ctx, totalW, totalH, color, orientation){
+    const r = 4.5, gap = 26, edgeMargin = 16;
     ctx.fillStyle = color;
-    for(let y = 30; y < totalH - 20; y += gap){
-      ctx.beginPath(); ctx.arc(marginX, y, r, 0, Math.PI*2); ctx.fill();
-      ctx.beginPath(); ctx.arc(totalW - marginX, y, r, 0, Math.PI*2); ctx.fill();
+    if(orientation === 'horizontal'){
+      for(let x = 30; x < totalW - 20; x += gap){
+        ctx.beginPath(); ctx.arc(x, edgeMargin, r, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(x, totalH - edgeMargin, r, 0, Math.PI*2); ctx.fill();
+      }
+    } else {
+      for(let y = 30; y < totalH - 20; y += gap){
+        ctx.beginPath(); ctx.arc(edgeMargin, y, r, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(totalW - edgeMargin, y, r, 0, Math.PI*2); ctx.fill();
+      }
     }
+  }
+
+  function drawStickers(ctx, x, y, w, h, theme){
+    const glyphs = STICKERS[theme];
+    if(!glyphs) return;
+    const size = Math.max(18, Math.round(w * 0.13));
+    ctx.save();
+    ctx.font = `${size}px sans-serif`;
+    ctx.textBaseline = 'top';
+    ctx.textAlign = 'left';
+    ctx.fillText(glyphs[0], x + 8, y + 6);
+    ctx.textAlign = 'right';
+    ctx.fillText(glyphs[1], x + w - 8, y + h - size - 6);
+    ctx.restore();
   }
 
   async function composeFinalStrip(){
@@ -607,10 +1172,11 @@
     const headerH = 100;
     const footerH = 110;
     const n = photosCanvases.length;
+    if(n === 0) return;
     const sample = photosCanvases[0];
-    const ratio = sample ? (sample.height / sample.width) : 0.75;
+    const ratio = sample.height / sample.width;
 
-    let totalW, totalH, photoW, photoH, gap, cols, rows;
+    let totalW, totalH, photoW, photoH, gap, cols, rows, orientation;
 
     if(layoutMode === 'grid'){
       cols = 2;
@@ -620,19 +1186,27 @@
       photoH = Math.round(photoW * ratio);
       totalW = margin*2 + photoW*cols + gap*(cols-1);
       totalH = margin + headerH + rows*photoH + gap*(rows-1) + footerH + margin;
+      orientation = 'vertical';
+    } else if(layoutMode === 'horizontal'){
+      cols = n; rows = 1; gap = 18;
+      photoH = 300;
+      photoW = Math.round(photoH / ratio);
+      totalH = margin + headerH + photoH + footerH + margin;
+      totalW = margin*2 + photoW*n + gap*(n-1);
+      orientation = 'horizontal';
     } else {
       cols = 1; rows = n; gap = 20;
       photoW = 460;
       photoH = Math.round(photoW * ratio);
       totalW = margin*2 + photoW;
       totalH = margin + headerH + n*photoH + gap*(n-1) + footerH + margin;
+      orientation = 'vertical';
     }
 
     finalCanvas.width = totalW;
     finalCanvas.height = totalH;
     const ctx = finalCanvas.getContext('2d');
 
-    // background
     if(frame.bg === 'gradient'){
       const g = ctx.createLinearGradient(0,0,totalW,totalH);
       g.addColorStop(0, '#ff9966');
@@ -643,20 +1217,18 @@
     }
     ctx.fillRect(0,0,totalW,totalH);
 
-    // sprocket holes
-    drawHoles(ctx, totalW, totalH, 'rgba(0,0,0,0.12)');
+    drawHoles(ctx, totalW, totalH, 'rgba(0,0,0,0.12)', orientation);
 
-    // header: brand mark + title
     drawBolt(ctx, margin, margin + 8, 26, frame.accent);
     ctx.fillStyle = frame.text;
     ctx.font = "700 30px Anton, sans-serif";
     ctx.textBaseline = 'alphabetic';
+    ctx.textAlign = 'left';
     ctx.fillText('KILAT BOOTH', margin + 36, margin + 30);
     ctx.fillStyle = frame.sub;
     ctx.font = "500 13px 'Space Grotesk', sans-serif";
     ctx.fillText('photobooth digital', margin + 36, margin + 50);
 
-    // photos
     const startY = margin + headerH;
     photosCanvases.forEach((cv, i) => {
       let x, y;
@@ -665,10 +1237,14 @@
         const row = Math.floor(i / cols);
         x = margin + col*(photoW+gap);
         y = startY + row*(photoH+gap);
+      } else if(layoutMode === 'horizontal'){
+        x = margin + i*(photoW+gap);
+        y = startY;
       } else {
-        x = margin + Math.round((photoW - photoW)/2);
+        x = margin;
         y = startY + i*(photoH+gap);
       }
+
       ctx.save();
       roundRectPath(ctx, x, y, photoW, photoH, 10);
       ctx.clip();
@@ -682,9 +1258,10 @@
       ctx.globalAlpha = 0.85;
       ctx.stroke();
       ctx.restore();
+
+      drawStickers(ctx, x, y, photoW, photoH, stickerTheme);
     });
 
-    // footer: date + caption
     const footerY = totalH - footerH;
     const now = new Date();
     const dateStr = now.toLocaleDateString('id-ID', { day:'2-digit', month:'long', year:'numeric' }) +
@@ -696,15 +1273,9 @@
     ctx.fillText(dateStr, totalW/2, footerY + 30);
 
     const caption = captionInput.value.trim();
-    if(caption){
-      ctx.fillStyle = frame.text;
-      ctx.font = "600 30px Caveat, cursive";
-      ctx.fillText(caption, totalW/2, footerY + 70);
-    } else {
-      ctx.fillStyle = frame.text;
-      ctx.font = "600 26px Caveat, cursive";
-      ctx.fillText('say cheese! ⚡', totalW/2, footerY + 68);
-    }
+    ctx.fillStyle = frame.text;
+    ctx.font = "600 30px Caveat, cursive";
+    ctx.fillText(caption || 'say cheese! ⚡', totalW/2, footerY + 70);
     ctx.textAlign = 'left';
   }
 
@@ -713,9 +1284,8 @@
     finalCanvas.toBlob(blob => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      const ts = Date.now();
       a.href = url;
-      a.download = `kilat-booth-${ts}.png`;
+      a.download = `kilat-booth-${Date.now()}.png`;
       document.body.appendChild(a);
       a.click();
       a.remove();
